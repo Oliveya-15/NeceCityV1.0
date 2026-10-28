@@ -1,0 +1,13 @@
+# Tells YOLO where the training photos and their label files are.
+# "path" is relative to the folder you run train.py from (the ml folder).
+path: data/real_dataset
+train: images/train
+val: images/val
+
+names:
+  0: pothole
+  1: road_damage
+  2: garbage
+  3: waterlogging
+  4: damaged_road_sign
+  5: open_drain

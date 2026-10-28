@@ -1,0 +1,10 @@
+# The six problem classes the model detects.
+# The ORDER matters: the model only outputs a class number (0 to 5).
+# The same order is used in dataset.yaml (training) and backend/app/ml/classes.py (the app).
+names:
+  0: pothole
+  1: road_damage
+  2: garbage
+  3: waterlogging
+  4: damaged_road_sign
+  5: open_drain

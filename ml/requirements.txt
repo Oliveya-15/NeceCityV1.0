@@ -1,0 +1,6 @@
+# Only needed for training / evaluating / exporting the model (NOT for the web app).
+ultralytics==8.3.28
+torch==2.4.1
+onnx
+onnxslim
+onnxruntime

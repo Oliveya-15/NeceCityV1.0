@@ -1,0 +1,31 @@
+# secrets and local settings
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# Node
+node_modules/
+dist/
+
+# uploaded photos (created while the app runs)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# training output and downloads (the trained model in ml/weights IS committed)
+ml/runs/
+ml/yolov8n.pt
+
+# editor / system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# info
+HOW_IT_WORKS.md

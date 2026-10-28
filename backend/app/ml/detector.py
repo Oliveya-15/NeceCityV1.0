@@ -63,6 +63,11 @@ class Detector:
             problem_type = CLASS_INDEX.get(box.class_id)
             if problem_type is None:
                 continue  # the model gave a class number we do not know
+
+            minimum = s.CLASS_MIN_CONFIDENCE.get(problem_type.value, s.MODEL_MIN_CONFIDENCE)
+            if box.confidence < minimum:
+                continue  # too unsure for this class, so it is not shown
+
             raw.append(RawDetection(
                 problem_type=problem_type,
                 confidence=round(box.confidence, 4),

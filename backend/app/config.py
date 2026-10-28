@@ -2,7 +2,6 @@
 (or from the .env file when running locally)."""
 from functools import lru_cache
 from pathlib import Path
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # the "backend" folder; relative paths in the settings are resolved from here
@@ -23,10 +22,14 @@ class Settings(BaseSettings):
     MODEL_PATH: str = "../ml/weights/nececity_yolo.onnx"
     MODEL_VERSION: str = "nececity-yolov8n"
     MODEL_IMAGE_SIZE: int = 640
+
     # a box at or above this confidence is treated as "confident"
     MODEL_CONFIDENCE_THRESHOLD: float = 0.35
     # boxes between MIN and THRESHOLD are still shown, marked "low confidence"
     MODEL_MIN_CONFIDENCE: float = 0.10
+    # classes the model over-predicts must be more confident before they are shown
+    CLASS_MIN_CONFIDENCE: dict[str, float] = {"waterlogging": 0.40}
+    
     MODEL_IOU_THRESHOLD: float = 0.45
     MODEL_MAX_DETECTIONS: int = 10
 

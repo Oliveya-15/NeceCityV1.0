@@ -1,13 +1,13 @@
 """Test setup. The tests use their OWN database, because every test starts by wiping it.
-
-Create it once:   createdb nececity_test   (or in psql: CREATE DATABASE nececity_test;)
-Use another one:  set TEST_DATABASE_URL before running pytest.
 """
 import os
 
+# Your specific Neon test database connection string
 TEST_URL = os.environ.get(
-    "TEST_DATABASE_URL", "postgresql+psycopg2://postgres:postgres@localhost:5432/nececity_test"
+    "TEST_DATABASE_URL", 
+    "postgresql+psycopg2://neondb_owner:npg_6o3MNFjgKPJz@ep-green-pine-b4y1pjm6-pooler.c-6.us-east-2.aws.neon.tech/nececity_test?sslmode=require"
 )
+
 # must be set BEFORE the app is imported, because the app reads it at import time
 os.environ["DATABASE_URL"] = TEST_URL
 os.environ["ENVIRONMENT"] = "test"
@@ -19,15 +19,21 @@ from app.database import Base, SessionLocal, engine  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import City  # noqa: E402
 
+# Safety check to ensure we never accidentally wipe your production database
 if not engine.url.database.endswith("_test"):
     raise RuntimeError("Refusing to run: the test database name must end with '_test'.")
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def clean_database():
+    # Dispose existing connections to prevent "table is locked" errors on Neon
+    engine.dispose()  
     Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     yield
+    # Clean up after all tests finish
+    engine.dispose()
+    Base.metadata.drop_all(engine)
 
 
 @pytest.fixture
@@ -36,12 +42,16 @@ def db(clean_database):
     try:
         yield session
     finally:
+        session.rollback()
+        # Wipe all data from all tables after every test to prevent UniqueViolation errors
+        for table in reversed(Base.metadata.sorted_tables):
+            session.execute(table.delete())
+        session.commit()
         session.close()
 
 
 @pytest.fixture
 def client(clean_database):
-    # no "with" block on purpose: the startup code (loading the model) is not needed here
     return TestClient(app)
 
 

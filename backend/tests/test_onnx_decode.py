@@ -54,3 +54,33 @@ def test_decode_handles_transposed_output_and_empty():
 def test_nms_keeps_highest_score():
     boxes = np.array([[0, 0, 10, 10], [1, 1, 11, 11], [50, 50, 60, 60]], dtype=np.float32)
     assert nms(boxes, np.array([0.5, 0.9, 0.7]), 0.45) == [1, 2]
+
+
+def test_small_box_inside_a_bigger_box_of_the_same_class_is_dropped():
+    out = _fake_output([
+        (320, 320, 400, 400, 5, 0.95),   # big box
+        (330, 340, 200, 200, 5, 0.30),   # smaller box completely inside the big one
+    ])
+    boxes = decode_output(out, scale=1, pad_x=0, pad_y=0, orig_w=640, orig_h=640,
+                          conf_thr=0.1, iou_thr=0.45, max_det=10)
+    assert len(boxes) == 1 and boxes[0].confidence > 0.9
+
+
+def test_box_inside_a_box_of_another_class_is_kept():
+    out = _fake_output([
+        (320, 320, 400, 400, 5, 0.95),   # open drain
+        (330, 340, 100, 100, 2, 0.60),   # garbage inside the drain: a different problem
+    ])
+    boxes = decode_output(out, scale=1, pad_x=0, pad_y=0, orig_w=640, orig_h=640,
+                          conf_thr=0.1, iou_thr=0.45, max_det=10)
+    assert sorted(b.class_id for b in boxes) == [2, 5]
+
+
+def test_two_separate_boxes_of_the_same_class_are_both_kept():
+    out = _fake_output([
+        (150, 150, 100, 100, 0, 0.90),
+        (450, 450, 100, 100, 0, 0.80),
+    ])
+    boxes = decode_output(out, scale=1, pad_x=0, pad_y=0, orig_w=640, orig_h=640,
+                          conf_thr=0.1, iou_thr=0.45, max_det=10)
+    assert len(boxes) == 2

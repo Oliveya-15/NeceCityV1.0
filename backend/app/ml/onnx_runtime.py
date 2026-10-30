@@ -75,6 +75,33 @@ def nms(boxes: np.ndarray, scores: np.ndarray, iou_thr: float) -> list[int]:
     return keep
 
 
+def drop_contained_boxes(
+    boxes: np.ndarray, class_ids: np.ndarray, keep: list[int], containment_thr: float = 0.8
+) -> list[int]:
+    """NMS only removes boxes that overlap a lot compared with their combined area.
+    A small box sitting INSIDE a big box of the same class has a low overlap score, so NMS keeps both
+    (for example one open drain drawn twice). Here we also drop such a box.
+
+    `keep` is ordered from the most confident box to the least confident one."""
+    final: list[int] = []
+    for i in keep:
+        x1, y1, x2, y2 = boxes[i]
+        area_i = max((x2 - x1) * (y2 - y1), 1e-9)
+        inside_a_better_box = False
+        for j in final:
+            if class_ids[j] != class_ids[i]:
+                continue
+            ix1, iy1 = max(x1, boxes[j][0]), max(y1, boxes[j][1])
+            ix2, iy2 = min(x2, boxes[j][2]), min(y2, boxes[j][3])
+            overlap = max(ix2 - ix1, 0) * max(iy2 - iy1, 0)
+            if overlap / area_i >= containment_thr:   # 80% or more of this box is inside the better one
+                inside_a_better_box = True
+                break
+        if not inside_a_better_box:
+            final.append(i)
+    return final
+
+
 def decode_output(
     output: np.ndarray,
     *,
@@ -109,7 +136,8 @@ def decode_output(
 
     # Per-class NMS (same as ultralytics default): shift each class far apart.
     offset = class_ids[:, None].astype(np.float32) * 10000.0
-    keep = nms(xyxy + offset, confs, iou_thr)[:max_det]
+    keep = nms(xyxy + offset, confs, iou_thr)
+    keep = drop_contained_boxes(xyxy, class_ids, keep)[:max_det]
 
     results: list[OnnxBox] = []
     for i in keep:

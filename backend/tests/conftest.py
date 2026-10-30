@@ -1,12 +1,10 @@
-"""Test setup. The tests use their OWN database, because every test starts by wiping it.
-"""
+"""Test setup. The tests use their OWN database, because every test starts by wiping it."""
 import os
 
-# Your specific Neon test database connection string
-TEST_URL = os.environ.get(
-    "TEST_DATABASE_URL", 
-    "postgresql+psycopg2://neondb_owner:npg_6o3MNFjgKPJz@ep-green-pine-b4y1pjm6-pooler.c-6.us-east-2.aws.neon.tech/nececity_test?sslmode=require"
-)
+# Require the environment variable to be set. Do not hardcode passwords in GitHub.
+TEST_URL = os.environ.get("TEST_DATABASE_URL")
+if not TEST_URL:
+    raise ValueError("TEST_DATABASE_URL is missing. Please set it in your terminal before running tests.")
 
 # must be set BEFORE the app is imported, because the app reads it at import time
 os.environ["DATABASE_URL"] = TEST_URL

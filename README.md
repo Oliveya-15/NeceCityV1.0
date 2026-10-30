@@ -189,6 +189,17 @@ The weights live in **one file** (`backend/app/risk.py`), are checked to add up 
 
 **On the server**, for every photo `onnx_runtime.py` does four things: *letterbox* the photo to 640 × 640 without stretching, run the model, *decode* the raw output into boxes, and apply *non-maximum suppression* (IoU 0.45) to remove duplicate boxes. Boxes are returned as fractions (0 to 1) of the original photo so the browser can draw them at any size.
 
+### 📊 Model Performance
+We evaluated the trained model using `ml/evaluate.py` on the 6 validation photos. The overall **mAP@0.5 is 59.1%**. 
+
+Because the validation set is currently very small (only 6 photos), the class-level scores vary widely. The model performs exceptionally well on structural issues like waterlogging, damaged signs, and open drains (scoring ~99.5% mAP@0.5), but struggles with potholes and garbage. Expanding the dataset is the primary focus for the next iteration.
+
+| Metric | Score |
+|---|---|
+| Precision | 0.27 |
+| Recall | 0.556 |
+| mAP@0.5 | 0.591 |
+
 **Train it yourself:** open `ml/NeceCity_Training_Colab.ipynb` in Google Colab (free GPU) or follow [`ml/README.md`](ml/README.md). Run `python evaluate.py` to get precision, recall and mAP for your trained model. With only six validation photos, those numbers are indicative, not conclusive.
 
 > 💡 The biggest improvement comes from **more labelled photos** (100+ per class) and **"negative" photos** (clean roads, trees, plants) so the model learns what *not* to flag.

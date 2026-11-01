@@ -76,7 +76,7 @@ def nms(boxes: np.ndarray, scores: np.ndarray, iou_thr: float) -> list[int]:
 
 
 def drop_contained_boxes(
-    boxes: np.ndarray, class_ids: np.ndarray, keep: list[int], containment_thr: float = 0.8
+    boxes: np.ndarray, class_ids: np.ndarray, keep: list[int], containment_thr: float = 0.5
 ) -> list[int]:
     """NMS only removes boxes that overlap a lot compared with their combined area.
     A small box sitting INSIDE a big box of the same class has a low overlap score, so NMS keeps both
@@ -94,7 +94,7 @@ def drop_contained_boxes(
             ix1, iy1 = max(x1, boxes[j][0]), max(y1, boxes[j][1])
             ix2, iy2 = min(x2, boxes[j][2]), min(y2, boxes[j][3])
             overlap = max(ix2 - ix1, 0) * max(iy2 - iy1, 0)
-            if overlap / area_i >= containment_thr:   # 80% or more of this box is inside the better one
+            if overlap / area_i >= containment_thr:   # 50% or more of this box is inside the better one
                 inside_a_better_box = True
                 break
         if not inside_a_better_box:

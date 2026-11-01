@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     # boxes between MIN and THRESHOLD are still shown, marked "low confidence"
     MODEL_MIN_CONFIDENCE: float = 0.10
     # classes the model over-predicts must be more confident before they are shown
-    CLASS_MIN_CONFIDENCE: dict[str, float] = {"waterlogging": 0.40}
+    CLASS_MIN_CONFIDENCE: dict[str, float] = {"waterlogging": 0.40, "garbage": 0.40}
     
     MODEL_IOU_THRESHOLD: float = 0.45
     MODEL_MAX_DETECTIONS: int = 10

@@ -5,7 +5,10 @@ A downloaded dataset usually looks like:
     some_dataset/data.yaml          (lists the class names)
     some_dataset/train/images, train/labels,  valid/images, valid/labels, test/...
 
-Run from the ml folder (one command per downloaded dataset):
+FIRST look at the class names inside the download (no files are copied):
+    python import_public_dataset.py --source ~/Downloads/rdd_india --show-classes
+
+Then run the real import from the ml folder (one command per downloaded dataset):
     python import_public_dataset.py --source ~/Downloads/rdd_india --tag rdd \
         --map "D40=pothole,D00=road_damage,D10=road_damage,D20=road_damage" \
         --output ../photos --max-images 300
@@ -54,15 +57,36 @@ def parse_mapping(text: str) -> dict[str, int]:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Convert a public YOLO dataset to NeceCity's classes.")
     parser.add_argument("--source", required=True)
-    parser.add_argument("--map", required=True, help='e.g. "D40=pothole,D00=road_damage"')
-    parser.add_argument("--tag", required=True, help="prefix for the copied file names")
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--map", help='e.g. "D40=pothole,D00=road_damage"')
+    parser.add_argument("--tag", help="prefix for the copied file names")
+    parser.add_argument("--output")
+    parser.add_argument("--show-classes", action="store_true", help="only print the dataset's class names and box counts")
     parser.add_argument("--max-images", type=int, default=0, help="0 = no limit")
     parser.add_argument("--keep-empty", action="store_true", help="keep photos without any mapped box as negatives")
     args = parser.parse_args()
 
-    source, output = Path(args.source), Path(args.output)
+    source = Path(args.source)
+    output = Path(args.output) if args.output else None
     their_names = read_names(source)
+
+    if args.show_classes:
+        counts = [0] * len(their_names)
+        for label_file in source.rglob("*.txt"):
+            if "labels" not in label_file.parts:
+                continue
+            for line in label_file.read_text().splitlines():
+                parts = line.split()
+                if parts and int(float(parts[0])) < len(counts):
+                    counts[int(float(parts[0]))] += 1
+        print(f"Classes in {source.name}:")
+        for i, (name, n) in enumerate(zip(their_names, counts)):
+            print(f"  {i:2d}  {name:25s} {n:7d} boxes")
+        print("\nNow choose which of them become pothole, road_damage, garbage, waterlogging, damaged_road_sign or open_drain,"
+              " and use --map \"name=ourclass,name2=ourclass\".")
+        return
+
+    if not (args.map and args.tag and args.output):
+        raise SystemExit("--map, --tag and --output are required (or use --show-classes to look first).")
     mapping = parse_mapping(args.map)
     unknown = [n for n in mapping if n not in their_names]
     if unknown:
